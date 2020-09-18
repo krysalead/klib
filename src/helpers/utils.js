@@ -1,6 +1,7 @@
 var fs = require("fs");
 var sinon = require("sinon");
 var Q = require("q");
+var path = require("path");
 
 const TESTFOLDER = "test";
 
@@ -9,13 +10,9 @@ const TESTFOLDER = "test";
  */
 //process.chdir("./" + TESTFOLDER);
 
-__require = function (package, dir) {
-  dir = dir || "/";
-  dir = dir.replace(__dirname + "/", "");
-  var dependency = __filename
-    .replace(TESTFOLDER + "/helpers", "src")
-    .replace("utils.js", package.replace(".", "/"));
-  //console.log("Requiring...", dependency);
+__require = function (package) {
+  const dir = process.cwd().replace("test", "src");
+  const dependency = path.join(dir, package.replace(".", "/") + ".js");
   return require(dependency);
 };
 
@@ -25,14 +22,14 @@ var self = {
   require: function (package, dir) {
     return __require(package, dir);
   },
-  beforeTest: function (parserManager) {
-    sandbox = sinon.sandbox.create();
-    sandbox.stub(parserManager, "request", function (method, url) {
+  mockRequest: function (requestService) {
+    var sandbox = sinon.createSandbox();
+    sandbox.replace(requestService, "request", function (method, url) {
       return Q.when(self.readMocks(url).toString());
     });
-  },
-  afterTest: function () {
-    sandbox.restore();
+    return () => {
+      sandbox.restore();
+    };
   },
   underTest: function (testClass) {
     return require(testClass.replace(TESTFOLDER, "src").replace("Test.js", ""));

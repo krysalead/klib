@@ -1,4 +1,6 @@
 require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
 const env = require("env-var");
 const getEnv = (group) => {
   return Object.keys(env.get())
@@ -10,12 +12,11 @@ const getEnv = (group) => {
     });
 };
 
+const config = fs.existsSync(path.join(__dirname + "config.json"));
+
 module.exports = function (scope) {
-  if (scope) {
-    console.log(
-      `Starting ${scope} with configuration`,
-      getEnv(scope).join("\n")
-    );
-  }
-  return env;
+  var scopedEnv = getEnv(scope);
+  console.log(`Starting ${scope} with environement`, scopedEnv.join("\n"));
+  console.log(`Starting ${scope} with configuration`, JSON.stringify(config));
+  return { ...config, env: scopedEnv };
 };

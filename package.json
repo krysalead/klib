@@ -14,7 +14,12 @@
     "bunyan-loggly": "^1.3.5",
     "cls-hooked": "^4.2.2",
     "dotenv": "^8.2.0",
-    "env-var": "^6.3.0"
+    "env-var": "^6.3.0",
+    "fwsp-config": "1.1.5",
+    "fwsp-jsutils": "^1.0.10",
+    "fwsp-logger": "0.3.2",
+    "fwsp-server-response": "2.2.6",
+    "hydra-express": "1.6.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
