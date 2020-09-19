@@ -1,9 +1,10 @@
 const hydra = require("hydra");
 var logger = require("./LoggingService")("MicroServiceWrapper");
+const HttpEndPoint = require("./HttpEndpoint");
 
 let self = function (config) {
   return {
-    buildMessage: (request) => {
+    _buildMessage: (request) => {
       logger.info("Sending UMF message");
       return hydra.createUMFMessage({
         to: `${request.serviceName}:[post]/v${request.version}/${request.action}`,
@@ -16,7 +17,7 @@ let self = function (config) {
         },
       });
     },
-    handleResponse: (resolve, reject) => {
+    _handleResponse: (resolve, reject) => {
       return (response) => {
         logger.info("Response recieved");
         if (
@@ -36,11 +37,11 @@ let self = function (config) {
         hydra.shutdown();
       }, 250);
     },
-    onReady: (resolve, reject, request) => {
+    _onReady: (resolve, reject, request) => {
       return () => {
         hydra
-          .makeAPIRequest(self.buildMessage(request))
-          .then(self.handleResponse(resolve, reject))
+          .makeAPIRequest(self._buildMessage(request))
+          .then(self._handleResponse(resolve, reject))
           .finally(() => {
             self.close();
           });
@@ -62,7 +63,7 @@ let self = function (config) {
         logger.info("Initializating Hydra");
         hydra
           .init(config)
-          .then(self.onReady(resolve, reject, request))
+          .then(self._onReady(resolve, reject, request))
           .catch((err) => {
             logger.error(
               err,
@@ -71,6 +72,13 @@ let self = function (config) {
             reject(err.message);
           });
       });
+    },
+    doStart: (serviceName, version) => {
+      if (config.useHydra) {
+        require("./HydraEndPoint")(serviceName, version);
+      } else {
+        require("./HttpEndPoint")(config);
+      }
     },
   };
 };
