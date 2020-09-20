@@ -1,6 +1,5 @@
 const hydra = require("hydra");
 var logger = require("./LoggingService")("MicroServiceWrapper");
-const HttpEndPoint = require("./HttpEndpoint");
 
 let self = function (config) {
   return {
@@ -59,25 +58,29 @@ let self = function (config) {
         version,
         action,
       };
-      return new Promise((resolve, reject) => {
-        logger.info("Initializating Hydra");
-        hydra
-          .init(config)
-          .then(self._onReady(resolve, reject, request))
-          .catch((err) => {
-            logger.error(
-              err,
-              `Fail to contact service ${serviceName} with ${payload} on ${version} of ${action}`
-            );
-            reject(err.message);
-          });
-      });
-    },
-    doStart: (serviceName, version) => {
       if (config.useHydra) {
-        require("./HydraEndPoint")(serviceName, version);
+        return new Promise((resolve, reject) => {
+          logger.info("Initializating Hydra");
+          hydra
+            .init(config)
+            .then(self._onReady(resolve, reject, request))
+            .catch((err) => {
+              logger.error(
+                err,
+                `Fail to contact service ${serviceName} with ${payload} on ${version} of ${action}`
+              );
+              reject(err.message);
+            });
+        });
       } else {
-        require("./HttpEndPoint")(config);
+        throw "Not yest implemented";
+      }
+    },
+    doStart: (controller) => {
+      if (config.useHydra) {
+        require("./HydraEndPoint")(config, controller);
+      } else {
+        require("./HttpEndPoint")(config, controller);
       }
     },
   };
