@@ -1,0 +1,400 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Cook book",
+    "description": "Cook book API",
+    "version": "1.0.0"
+  },
+  "host": "localhost:4200",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "basePath": "/api/v1",
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "x-swagger-mongoose": {
+    "validators": "node_modules/klib/src/services/ValidatorsService"
+  },
+  "definitions": {
+    "Cookbook": {
+      "type": "object",
+      "x-swagger-mongoose": {
+        "schema-options": {
+          "timestamps": true
+        }
+      },
+      "properties": {
+        "_id": {
+          "type": "string",
+          "x-swagger-mongoose": {
+            "index": {
+              "unique": "true"
+            }
+          },
+          "description": "Unique identifier representing a specific object in our local database"
+        },
+        "owner_id": {
+          "type": "string",
+          "description": "Identifier of the owner"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the recipe was added to the cookbook"
+        },
+        "category": {
+          "type": "string",
+          "description": "What kind of cookbook it is, european food, dessert"
+        },
+        "recipes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "x-swagger-mongoose": {
+              "$ref": "#/definitions/CookbookRecipe"
+            },
+            "description": "The list of recipes associated to the cookbook"
+          }
+        }
+      }
+    },
+    "CookbookRecipe": {
+      "type": "object",
+      "x-swagger-mongoose": {
+        "schema-options": {
+          "timestamps": true
+        }
+      },
+      "properties": {
+        "_id": {
+          "type": "string",
+          "x-swagger-mongoose": {
+            "index": {
+              "unique": "true"
+            }
+          },
+          "description": "Unique identifier representing a specific object in our local database"
+        },
+        "lastRealized": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "x-swagger-mongoose": {
+              "$ref": "#/definitions/Realization"
+            }
+          }
+        },
+        "favorite": {
+          "type": "boolean",
+          "description": "If this recipe is one of the favorite of the user"
+        },
+        "picture": {
+          "type": "string",
+          "description": "User illustration of the cookbook recipe"
+        },
+        "language": {
+          "type": "string",
+          "description": "The language of the cookbook recipe"
+        },
+        "owner_id": {
+          "type": "string",
+          "description": "The owner of the object"
+        },
+        "recipe": {
+          "type": "string",
+          "x-swagger-mongoose": {
+            "$ref": "#/definitions/Recipe"
+          },
+          "description": "The recipe decorated by this object"
+        },
+        "customizations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "x-swagger-mongoose": {
+              "$ref": "#/definitions/Recipe"
+            }
+          }
+        }
+      }
+    },
+    "Recipe": {
+      "type": "object",
+      "x-swagger-mongoose": {
+        "schema-options": {
+          "timestamps": true
+        }
+      },
+      "properties": {
+        "_id": {
+          "type": "string",
+          "x-swagger-mongoose": {
+            "index": {
+              "unique": "true"
+            }
+          },
+          "description": "Unique identifier representing a specific recipe in our local database"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the recipe was added and parsed"
+        },
+        "source": {
+          "$ref": "#/definitions/Source",
+          "description": "Source of the recipe in case of parsing"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL from where it was/should be parsed or the null if created from the app"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the recipe"
+        },
+        "picture": {
+          "type": "string",
+          "description": "Illustration of the recipe"
+        },
+        "cookingDuration": {
+          "type": "number",
+          "format": "integer",
+          "description": "duration in minute of the cooking period"
+        },
+        "preparingDuration": {
+          "type": "number",
+          "format": "integer",
+          "description": "duration in minute of the preparation period"
+        },
+        "waitingDuration": {
+          "type": "number",
+          "format": "integer",
+          "description": "duration in minute of the waiting period"
+        },
+        "numberOfPiece": {
+          "type": "number",
+          "format": "integer",
+          "description": "Number of piece we can create with the ingredient or number of person recipe is for"
+        },
+        "pieceType": {
+          "type": "string",
+          "description": "Give the information that the number of piece is person or piece"
+        },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Ingredient"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Step"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "ingredients",
+        "steps",
+        "numberOfPiece"
+      ],
+      "example": {
+        "title": "Mousse au chocolat"
+      }
+    },
+    "Ingredient": {
+      "type": "object",
+      "x-swagger-mongoose": {
+        "schema-options": {
+          "_id": false
+        }
+      },
+      "properties": {
+        "quantity": {
+          "type": "number",
+          "format": "float",
+          "description": "The quantity of the ingredient"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of the ingredient"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the ingredient"
+        },
+        "density": {
+          "type": "number",
+          "format": "float",
+          "description": "The density of the ingredient"
+        },
+        "divisible": {
+          "type": "boolean",
+          "description": "Is the ingredient divisible"
+        }
+      },
+      "required": [
+        "quantity",
+        "unit",
+        "name"
+      ]
+    },
+    "Step": {
+      "type": "object",
+      "x-swagger-mongoose": {
+        "schema-options": {
+          "_id": false
+        }
+      },
+      "properties": {
+        "description": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepDetail"
+          }
+        }
+      },
+      "required": [
+        "description"
+      ]
+    },
+    "StepDetail": {
+      "type": "object",
+      "x-swagger-mongoose": {
+        "schema-options": {
+          "_id": false
+        }
+      },
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The list of Step Details"
+        },
+        "duration": {
+          "type": "number",
+          "format": "integer",
+          "description": "The duration if the element of the step is a timer"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit for the duration"
+        },
+        "ingredient": {
+          "type": "string",
+          "description": "The index of the ingredient in the ingredient list"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    },
+    "Source": {
+      "type": "object",
+      "x-swagger-mongoose": {
+        "exclude-schema": true
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Original name of the site"
+        },
+        "logo": {
+          "type": "string",
+          "description": "Logo of the original site"
+        }
+      }
+    },
+    "Realization": {
+      "type": "object",
+      "properties": {
+        "recipe_id": {
+          "x-swagger-mongoose": {
+            "exclude-schema": true
+          },
+          "type": "string",
+          "description": "The recipe id that was realized"
+        },
+        "when": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The day it was realized"
+        },
+        "who": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Guest"
+          },
+          "description": "The list of invited person"
+        },
+        "dayTime": {
+          "type": "string",
+          "description": "The day it was/will be realized"
+        },
+        "comment": {
+          "type": "string",
+          "description": "a comment on the recipe"
+        }
+      }
+    },
+    "Guest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Guest's name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Guest's email"
+        }
+      }
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "x-swagger-mongoose": {
+            "index": {
+              "unique": "true"
+            }
+          },
+          "description": "Unique identifier representing a specific user in our local database"
+        },
+        "auth0_id": {
+          "type": "string",
+          "description": "The auth0 user id we use as a reference everywhere"
+        },
+        "email": {
+          "type": "string",
+          "description": "The user email"
+        },
+        "name": {
+          "type": "string",
+          "description": "The user name"
+        },
+        "quota": {
+          "type": "integer",
+          "description": "The number of recipe the user is allowed to add to his account"
+        },
+        "tokens": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of device token"
+        }
+      },
+      "required": [
+        "auth0_id",
+        "email"
+      ]
+    }
+  }
+}
