@@ -72,12 +72,12 @@ const HydraEndpoint = (config, controller) => {
                 });
               },
               (reason) => {
-                logger.error(reason, "Fail to parse for");
+                logger.error(reason, "Call failed for");
                 res.sendError(reason);
               }
             )
             .catch((e) => {
-              logger.error(e, "Fail to parse for");
+              logger.error(e, "Call failed for");
               res.sendError(e.message);
             });
         } else {

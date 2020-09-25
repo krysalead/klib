@@ -29,7 +29,7 @@ module.exports = function (scope) {
     }
   }
   const packageJson = require(path.join(process.cwd(), "package.json"));
-  config.version = packageJson.version;
+  config.version = packageJson.version.split(".")[0]; //taking only the major version
   config.serviceName = packageJson.name;
   const finalConfig = { ...config, ...envConfig };
   logger.debug(`Starting ${scope} with configuration`, finalConfig);

@@ -389,6 +389,20 @@
             "type": "string"
           },
           "description": "List of device token"
+        },
+        "dislike": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of things user dislike"
+        },
+        "allergies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of things user allergies"
         }
       },
       "required": [
