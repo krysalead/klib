@@ -1,6 +1,7 @@
 const hydra = require("hydra");
 var logger = require("./LoggingService")("MicroServiceWrapper");
 var CLSService = require("./CLSService");
+const MongoDBService = require("./MongoDBService");
 
 module.exports = function (config) {
   const self = {
@@ -25,26 +26,24 @@ module.exports = function (config) {
     },
     _handleResponse: (resolve, reject) => {
       return (response) => {
-        logger.info("Response recieved", response.result);
-        if (
-          response.result &&
-          response.result.error == undefined &&
-          response.result.reason == undefined
-        ) {
+        logger.info("Response recieved", response);
+        if (response.statusCode === 200) {
           resolve(response.result);
         } else {
           logger.warn(
-            "Service answered with:",
-            response.result.reason || response.result.error
+            `${response.result.from} (${response.result.id}) answered with:${response.statusDescription} (${response.statusCode})`
           );
-          reject(response.result.reason || response.result.error);
+          logger.warn(response.result.message);
+          reject(response.result);
         }
       };
     },
     close: () => {
-      setTimeout(() => {
-        hydra.shutdown();
-      }, 250);
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          hydra.shutdown().then(resolve, reject);
+        }, 250);
+      });
     },
     _onReady: (resolve, reject, request) => {
       return () => {
@@ -52,17 +51,20 @@ module.exports = function (config) {
         logger.debug("UMF message", message);
         hydra
           .makeAPIRequest(message)
-          .then(self._handleResponse(resolve, reject))
-          .finally(() => {
-            self.close();
-          });
+          .then(self._handleResponse(resolve, reject));
       };
     },
     /**
      * Return a promise to wait for the call to the service
      * @returns {Promise}
      */
-    doCall: function (serviceName, payload, version, action, method = "post") {
+    doCall: function (
+      serviceName,
+      payload,
+      version,
+      action = "",
+      method = "post"
+    ) {
       logger.info("doCall");
       const request = {
         serviceName,
@@ -104,10 +106,18 @@ module.exports = function (config) {
       }
     },
     doStart: (controller) => {
+      var endpoint;
       if (config.useHydra) {
-        require("./HydraEndPoint")(config, controller);
+        endpoint = require("./HydraEndPoint");
       } else {
-        require("./HttpEndPoint")(config, controller);
+        endpoint = require("./HttpEndPoint");
+      }
+      if (config.MONGO_URL) {
+        MongoDBService.init(config).then(() => {
+          return endpoint(config, controller);
+        });
+      } else {
+        return endpoint(config, controller);
       }
     },
   };

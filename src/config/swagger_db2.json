@@ -403,6 +403,18 @@
             "type": "string"
           },
           "description": "List of things user allergies"
+        },
+        "gender": {
+          "type": "string",
+          "description": "M for male and F for female"
+        },
+        "city": {
+          "type": "string",
+          "description": "The city the person lives in"
+        },
+        "country": {
+          "type": "string",
+          "description": "The country the person lives in"
         }
       },
       "required": [

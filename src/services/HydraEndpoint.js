@@ -7,11 +7,50 @@ var CLSservice = require("./CLSService");
 var UtilService = require("./UtilsService");
 
 let serverResponse = new ServerResponse();
-express.response.sendError = function (err) {
-  serverResponse.sendServerError(this, { result: { error: err } });
+
+const getResponse = (code, result) => {
+  return {
+    result: {
+      from: hydra.getServiceName(),
+      id: hydra.getInstanceID(),
+      code: code,
+      message: code !== 200 ? result : null,
+      data: code === 200 ? result : null,
+    },
+  };
+};
+
+express.response.sendError = function (result) {
+  logger.error("Call crashed for", result);
+  serverResponse.sendServerError(
+    this,
+    getResponse(ServerResponse.HTTP_SERVER_ERROR, result)
+  );
 };
 express.response.sendOk = function (result) {
-  serverResponse.sendOk(this, { result });
+  serverResponse.sendOk(this, getResponse(ServerResponse.HTTP_OK, result));
+};
+express.response.invalid = function (result) {
+  logger.warn("Call failed for", result);
+  serverResponse.sendInvalidRequest(
+    this,
+    getResponse(ServerResponse.HTTP_BAD_REQUEST, result)
+  );
+};
+express.response.unAuthorized = function (result) {
+  logger.warn("UnAuthorized call", result);
+  serverResponse.sendInvalidUserCredentials(
+    this,
+    getResponse(ServerResponse.HTTP_UNAUTHORIZED, result)
+  );
+};
+
+express.response.unImplemented = function (result) {
+  logger.warn("unImplemented call", result);
+  serverResponse.sendMethodNotImplemented(
+    this,
+    getResponse(ServerResponse.HTTP_METHOD_NOT_IMPLEMENTED, result)
+  );
 };
 
 const TOKEN_HEADER_KEY = "x-service-token";
@@ -36,21 +75,26 @@ const HydraEndpoint = (config, controller) => {
       const message =
         "Invalid configuration, you need to specify routes in your config.json as an array of {path,method,handler}";
       logger.error(message);
-      throw message;
+      return;
     }
     config.routes.forEach((route) => {
       logger.info(
         `registered: [${route.method}]${serviceFullName}${route.path}`
       );
+      if (controller[route.handler] == undefined) {
+        logger.error(`${route.handler} doesn't exist on controller`);
+        return;
+      }
       api[route.method](route.path, CLSservice.middleware, (req, res) => {
         logger.info({ req: req }, "Incoming request");
+        logger.debug("message", req.body);
         checkTransactionId(req);
         //Create a mdw instead of a function
         if (
           req.body[TOKEN_HEADER_KEY] !==
           config[config.serviceName.toUpperCase().replace("-", "_") + "_TOKEN"]
         ) {
-          res.sendError(
+          res.unAuthorized(
             "Invalid Token or no token provided " +
               TOKEN_HEADER_KEY +
               "=>" +
@@ -66,24 +110,18 @@ const HydraEndpoint = (config, controller) => {
               (result) => {
                 logger.info("request handled");
                 logger.debug("message", result);
-                res.sendOk({
-                  from: `${hydra.getServiceName()} - ${hydra.getInstanceID()}`,
-                  data: result,
-                });
+                res.sendOk(result);
               },
               (reason) => {
-                logger.error(reason, "Call failed for");
-                res.sendError(reason);
+                res.invalid(reason);
               }
             )
             .catch((e) => {
-              logger.error(e, "Call failed for");
               res.sendError(e.message);
             });
         } else {
-          logger.error(
-            `${route.handler} is not returning a promise. Not processing the response`
-          );
+          const message = `${route.handler} is not returning a promise. Not processing the response`;
+          res.unImplemented(message);
         }
       });
     });

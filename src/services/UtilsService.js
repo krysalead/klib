@@ -102,12 +102,12 @@ var self = {
    * @param {Object} object
    * @returns {Promise<T>}
    */
-  checkFields: function (list, object) {
-    logger.info("checkFields");
+  hasMissingFields: function (list, object) {
+    logger.debug("hasMissingFields");
     var fails = list.filter(function (item) {
       return object == undefined || object[item] == undefined;
     });
-    logger.info("checkFields done");
+    logger.debug("hasMissingFields done");
     return fails.length > 0;
   },
 };
