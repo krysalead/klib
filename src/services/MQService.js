@@ -56,9 +56,21 @@ module.exports = function (config) {
     handle: (handler, queue) => {
       return self._init().then((ch) => {
         logger.info("Waiting for messages in " + queue);
-        ch.consume(queue, CLSService.wrap(handler), {
-          noAck: true,
-        });
+        ch.consume(
+          queue,
+          CLSService.wrap((msg) => {
+            var payload = JSON.parse(msg.content.toString());
+            CLSService.set("reqId", payload["x-transaction-id"]);
+            if (payload.src == undefined) {
+              logger.error("Failed to identify sender", msg.content);
+            } else {
+              handler(payload);
+            }
+          }),
+          {
+            noAck: true,
+          }
+        );
       });
     },
     push: (payload, queue) => {

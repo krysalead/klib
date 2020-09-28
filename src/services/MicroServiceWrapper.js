@@ -30,18 +30,25 @@ module.exports = function (config) {
         if (response.statusCode === 200) {
           resolve(response.result);
         } else {
-          logger.warn(
-            `${response.result.from} (${response.result.id}) answered with:${response.statusDescription} (${response.statusCode})`
-          );
-          logger.warn(response.result.message);
-          reject(response.result);
+          if (response.statusCode == 503) {
+            logger.warn(
+              `Service unavailable: ${response.result.reason} (${response.statusCode})`
+            );
+          } else {
+            logger.warn(
+              `${response.result.from} (${response.result.id}) answered with:${response.statusDescription} (${response.statusCode})`
+            );
+            logger.warn(response.result.message);
+          }
+          reject({ reason: response.result.reason, code: response.statusCode });
         }
       };
     },
     close: () => {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
-          hydra.shutdown().then(resolve, reject);
+          hydra.shutdown(); //.then(resolve, reject);
+          resolve();
         }, 250);
       });
     },

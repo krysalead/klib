@@ -24,11 +24,10 @@ var self = {
     self._prepareMongoose(config);
     return new Promise((resolve, reject) => {
       var dbUrl = config.MONGO_URL;
-      logger.info(
-        `Mongoose connecting to ${
-          config.MONGO_URL.split("@")[1] || config.MONGO_URL
-        }...`
-      );
+      if (dbUrl == undefined) {
+        return Promise.reject("Database url not defined");
+      }
+      logger.info(`Mongoose connecting to ${dbUrl.split("@")[1] || dbUrl}...`);
       mongoose.connect(dbUrl, function (err) {
         if (err) {
           logger.error("Connection fails", err);

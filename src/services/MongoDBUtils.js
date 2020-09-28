@@ -2,7 +2,6 @@ var swaggerMongoose = require("swagger-mongoose");
 var swagger = require("../config/swagger_db2.json");
 var CLSService = require("./CLSService");
 var logger = require("./LoggingService")("MongoDBUtils");
-var Q = require("q");
 var mongoose = require("mongoose");
 
 function isEmpty(map) {
@@ -52,14 +51,13 @@ var self = {
     };
   },
   errorHandler: function (err) {
-    console.log(arguments);
     if (err && !isEmpty(err)) {
       logger.error("Database call failed for", err);
     }
   },
   exceptionHandler: function (errorMessage) {
     return function (e) {
-      logger.info("exceptionHandler", e);
+      logger.error("exceptionHandler", e);
       return errorService.getBackendError(500, errorMessage, e);
     };
   },
@@ -81,15 +79,13 @@ var self = {
    */
   failIfEmpty: function (result) {
     logger.info("failIfEmpty");
-    var deferer = Q.defer();
     if (result == null || result.length == 0) {
       logger.warn("Rejected due to empty answer");
-      deferer.reject(self.EMPTY_RESPONSE);
+      return Promise.reject(self.EMPTY_RESPONSE);
     } else {
       logger.info("Resolved with object");
-      deferer.resolve(result);
+      return Promise.resolve(result);
     }
-    return deferer.promise;
   },
   /**
    *
@@ -97,7 +93,7 @@ var self = {
    * @returns {*}
    */
   asArray: function (result) {
-    logger.info("asArray");
+    logger.debug("asArray");
     if (result != null) {
       if (result.join === undefined) {
         //It is not an array
@@ -117,7 +113,7 @@ var self = {
    * @returns {*}
    */
   notAsArray: function (result) {
-    logger.info("notAsArray");
+    logger.debug("notAsArray");
     if (result && result.join !== undefined) {
       return result.length > 0 ? result[0] : null;
     } else {
@@ -125,7 +121,7 @@ var self = {
     }
   },
   transformDAO: function (doc, ret, options) {
-    logger.info("toJSON");
+    logger.debug("toJSON");
     ret.id = ret._id;
     delete ret._id;
     delete ret.__v;
@@ -172,6 +168,41 @@ var self = {
         err ? reject(err) : resolve();
       });
     });
+  },
+  /**
+   * Secure the id coming from the database
+   * @param object
+   * @returns {*}
+   */
+  secureObjectId: function (object) {
+    var id = object._id || object.id;
+    object = this.cleanObjectId(object);
+    object.id = id;
+    return object;
+  },
+  /**
+   * Remove the _id of an object
+   * @param object
+   * @returns {*}
+   */
+  cleanObjectId: function (object) {
+    if (object.toJSON !== undefined) {
+      object = object.toJSON();
+      delete object.toJSON;
+    }
+    if (object._id) {
+      delete object._id;
+    }
+    if (object.id) {
+      delete object.id;
+    }
+    if (object.__v !== undefined) {
+      delete object.__v;
+    }
+    if (object.owner_id !== undefined) {
+      delete object.owner_id;
+    }
+    return object;
   },
 };
 module.exports = self;

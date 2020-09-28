@@ -28,15 +28,25 @@ express.response.sendError = function (result) {
   );
 };
 express.response.sendOk = function (result) {
+  logger.info("request handled");
+  logger.debug("message", result);
   serverResponse.sendOk(this, getResponse(ServerResponse.HTTP_OK, result));
 };
-express.response.invalid = function (result) {
+express.response.sendWarn = function (result) {
   logger.warn("Call failed for", result);
-  serverResponse.sendInvalidRequest(
-    this,
-    getResponse(ServerResponse.HTTP_BAD_REQUEST, result)
-  );
+  switch (result.code) {
+    case 400:
+      serverResponse.sendInvalidRequest(this, getResponse(result.code, result));
+      break;
+    case 503:
+      serverResponse.sendUnavailableError(
+        this,
+        getResponse(result.code, result)
+      );
+      break;
+  }
 };
+
 express.response.unAuthorized = function (result) {
   logger.warn("UnAuthorized call", result);
   serverResponse.sendInvalidUserCredentials(
@@ -108,12 +118,10 @@ const HydraEndpoint = (config, controller) => {
           promise
             .then(
               (result) => {
-                logger.info("request handled");
-                logger.debug("message", result);
                 res.sendOk(result);
               },
               (reason) => {
-                res.invalid(reason);
+                res.sendWarn(reason);
               }
             )
             .catch((e) => {
