@@ -56,6 +56,7 @@ module.exports = function (config) {
     handle: (handler, queue) => {
       return self._init().then((ch) => {
         logger.info("Waiting for messages in " + queue);
+        ch.assertQueue(queue, { durable: false });
         ch.consume(
           queue,
           CLSService.wrap((msg) => {
