@@ -4,6 +4,9 @@ var CLSService = require("./CLSService");
 const MongoDBService = require("./MongoDBService");
 
 module.exports = function (config) {
+  if (global.MicroServiceWrapper) {
+    return global.MicroServiceWrapper;
+  }
   const self = {
     _buildMessage: (request) => {
       logger.debug("Sending UMF message from", config.serviceName);
@@ -61,6 +64,24 @@ module.exports = function (config) {
           .then(self._handleResponse(resolve, reject));
       };
     },
+    _mockedRequest: {},
+    mockRequest: (path, data) => {
+      self._mockedRequest[path] = data;
+    },
+    isMocked: (request) => {
+      return self._mockedRequest[self.getMockUrlRequest(request)] !== undefined;
+    },
+    getMock: (request) => {
+      return self._mockedRequest[self.getMockUrlRequest(request)];
+    },
+    getMockUrlRequest: (request) => {
+      return [
+        request.serviceName,
+        request.version,
+        request.method,
+        request.action,
+      ].join(":");
+    },
     /**
      * Return a promise to wait for the call to the service
      * @returns {Promise}
@@ -80,6 +101,11 @@ module.exports = function (config) {
         action,
         method,
       };
+      logger.debug("Requesting", self.getMockUrlRequest(request));
+      if (self.isMocked(request)) {
+        logger.warn("Answering mock");
+        return Promise.resolve(self.getMock(request));
+      }
       if (config.useHydra) {
         return new Promise((resolve, reject) => {
           logger.debug("Initializating Hydra");
@@ -114,6 +140,12 @@ module.exports = function (config) {
     },
     doStart: (controller) => {
       var endpoint;
+      if (config.USE_MOCK && config.mocks) {
+        config.mocks.forEach((mock) => {
+          logger.warn(`${mock.url} is mocked`);
+          self.mockRequest(mock.url, require(process.cwd() + mock.data));
+        });
+      }
       if (config.useHydra) {
         endpoint = require("./HydraEndPoint");
       } else {
@@ -128,5 +160,6 @@ module.exports = function (config) {
       }
     },
   };
+  global.MicroServiceWrapper = self;
   return self;
 };

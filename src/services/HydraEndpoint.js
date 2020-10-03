@@ -21,10 +21,13 @@ const getResponse = (code, result) => {
 };
 
 express.response.sendError = function (result) {
-  logger.error("Call crashed for", result);
+  logger.error(result, "Call crashed for");
   serverResponse.sendServerError(
     this,
-    getResponse(ServerResponse.HTTP_SERVER_ERROR, result)
+    getResponse(
+      ServerResponse.HTTP_SERVER_ERROR,
+      `${result.name}: ${result.message}`
+    )
   );
 };
 express.response.sendOk = function (result) {
@@ -44,6 +47,11 @@ express.response.sendWarn = function (result) {
         getResponse(result.code, result)
       );
       break;
+    default:
+      serverResponse.sendInternalError(
+        this,
+        getResponse(ServerResponse.HTTP_SERVER_ERROR, result)
+      );
   }
 };
 
@@ -65,6 +73,16 @@ express.response.unImplemented = function (result) {
 
 const TOKEN_HEADER_KEY = "x-service-token";
 const TRANSACTION_HEADER_KEY = "x-transaction-id";
+const EXCEPTIONS = [
+  "EvalError",
+  "InternalError",
+  "RangeError",
+  "ReferenceError",
+  "SyntaxError",
+  "TypeError",
+  "URIError",
+  "Error",
+];
 
 const HydraEndpoint = (config, controller) => {
   //Create a mdw instead of a cal to a function
@@ -121,11 +139,15 @@ const HydraEndpoint = (config, controller) => {
                 res.sendOk(result);
               },
               (reason) => {
-                res.sendWarn(reason);
+                if (EXCEPTIONS.indexOf(reason.name) > -1) {
+                  res.sendError(reason);
+                } else {
+                  res.sendWarn(reason);
+                }
               }
             )
             .catch((e) => {
-              res.sendError(e.message);
+              res.sendError(e);
             });
         } else {
           const message = `${route.handler} is not returning a promise. Not processing the response`;

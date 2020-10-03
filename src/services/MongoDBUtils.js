@@ -19,13 +19,13 @@ var self = {
    * @param deferer
    * @returns {Function}
    */
-  getCallbackHandler: function (deferer, asArray, failIfEmpty) {
+  getCallbackHandler: function (asArray = false, failIfEmpty = false) {
     logger.debug("getCallbackHandler");
     return function (err, result) {
       logger.debug("Database Handler function");
       if (err) {
         logger.error("Database call failed for", err);
-        deferer.reject(err);
+        return Promise.reject(err);
       } else {
         logger.debug("Database call success");
         if (result != null) {
@@ -41,11 +41,11 @@ var self = {
           }
         }
         if (failIfEmpty && (result == null || result.length == 0)) {
-          logger.info("Rejected due to empty answer");
-          deferer.reject(self.EMPTY_RESPONSE);
+          logger.warn("Rejected due to empty answer");
+          return Promise.reject(self.EMPTY_RESPONSE);
         } else {
-          logger.debug("Resolved with object");
-          deferer.resolve(result);
+          logger.debug("Resolved with object", result);
+          return Promise.resolve(result);
         }
       }
     };
@@ -62,7 +62,9 @@ var self = {
     };
   },
   runSafe: function (scope, fn, args) {
+    logger.debug("runSafe");
     return new Promise(function (resolve, reject) {
+      logger.debug("Get context");
       var context = CLSService.context();
       logger.debug("Storing context");
       var ns = CLSService.namespace();
@@ -175,6 +177,7 @@ var self = {
    * @returns {*}
    */
   secureObjectId: function (object) {
+    logger.debug("secureObjectId");
     var id = object._id || object.id;
     object = this.cleanObjectId(object);
     object.id = id;
@@ -186,6 +189,7 @@ var self = {
    * @returns {*}
    */
   cleanObjectId: function (object) {
+    logger.debug("cleanObjectId");
     if (object.toJSON !== undefined) {
       object = object.toJSON();
       delete object.toJSON;

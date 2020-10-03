@@ -42,7 +42,7 @@ var self = {
   },
   _prepareMongoose: (config) => {
     clsMongoose(CLSService.namespace());
-    mongoose.Promise = require("q").Promise;
+    mongoose.Promise = Promise;
     mongoose.set("debug", config.MONGOOSE_DEBUG || false);
     var db = mongoose.connection;
     db.on("error", printMongooseError);

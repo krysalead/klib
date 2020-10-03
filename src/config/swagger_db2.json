@@ -80,6 +80,10 @@
           },
           "description": "Unique identifier representing a specific object in our local database"
         },
+        "category": {
+          "type": "string",
+          "description": "a group inside the cookbook"
+        },
         "lastRealized": {
           "type": "array",
           "items": {
