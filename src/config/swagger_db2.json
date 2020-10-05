@@ -101,6 +101,10 @@
           "type": "string",
           "description": "User illustration of the cookbook recipe"
         },
+        "title": {
+          "type": "string",
+          "description": "title of the recipe"
+        },
         "language": {
           "type": "string",
           "description": "The language of the cookbook recipe"
@@ -109,12 +113,9 @@
           "type": "string",
           "description": "The owner of the object"
         },
-        "recipe": {
+        "recipe_id": {
           "type": "string",
-          "x-swagger-mongoose": {
-            "$ref": "#/definitions/Recipe"
-          },
-          "description": "The recipe decorated by this object"
+          "description": "The recipe id of the decorated by this object"
         },
         "customizations": {
           "type": "array",

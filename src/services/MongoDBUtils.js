@@ -20,45 +20,37 @@ var self = {
    * @returns {Function}
    */
   getCallbackHandler: function (asArray = false, failIfEmpty = false) {
-    logger.debug("getCallbackHandler");
-    return function (err, result) {
-      logger.debug("Database Handler function");
-      if (err) {
-        logger.error("Database call failed for", err);
-        return Promise.reject(err);
+    logger.debug(
+      `getCallbackHandler asArray = ${asArray}, failIfEmpty = ${failIfEmpty}`
+    );
+    return (result) => {
+      logger.debug("Database call success");
+      if (asArray) {
+        result = self.asArray(result);
       } else {
-        logger.debug("Database call success");
-        if (result != null) {
-          if (asArray && result.join === undefined) {
-            result = [result];
-          }
-          if (!asArray && result.join !== undefined) {
-            result = result.length > 0 ? result[0] : null;
-          }
-        } else {
-          if (asArray) {
-            result = [];
-          }
-        }
-        if (failIfEmpty && (result == null || result.length == 0)) {
-          logger.warn("Rejected due to empty answer");
-          return Promise.reject(self.EMPTY_RESPONSE);
-        } else {
-          logger.debug("Resolved with object", result);
-          return Promise.resolve(result);
-        }
+        result = self.notAsArray(result);
+      }
+      if (failIfEmpty) {
+        return self.failIfEmpty(result);
+      } else {
+        return result;
       }
     };
   },
   errorHandler: function (err) {
     if (err && !isEmpty(err)) {
-      logger.error("Database call failed for", err);
+      const message = `Database call failed for ${err.message}`;
+      logger.error(err, message);
+      throw new Error(message);
     }
+    logger.error("Database call failed without information");
   },
   exceptionHandler: function (errorMessage) {
     return function (e) {
-      logger.error("exceptionHandler", e);
-      return errorService.getBackendError(500, errorMessage, e);
+      logger.error(`exceptionHandler [${errorMessage}]`, e.message);
+      return Promise.reject(
+        `exceptionHandler [${errorMessage}] -> ${e.message}`
+      );
     };
   },
   runSafe: function (scope, fn, args) {
@@ -71,7 +63,11 @@ var self = {
       ns.run(function () {
         logger.debug("Restoring context");
         CLSService.context(context);
-        fn.apply(scope, args).then(resolve, reject);
+        fn.apply(scope, args)
+          .then(resolve, reject)
+          .catch((e) => {
+            logger.error(e, "fail call in runsafe");
+          });
       });
     });
   },
@@ -80,13 +76,13 @@ var self = {
    * @param result
    */
   failIfEmpty: function (result) {
-    logger.info("failIfEmpty");
+    logger.debug("failIfEmpty");
     if (result == null || result.length == 0) {
-      logger.warn("Rejected due to empty answer");
-      return Promise.reject(self.EMPTY_RESPONSE);
+      const EMPTY_RESPONSE = "Fail due to empty answer";
+      logger.warn(EMPTY_RESPONSE);
+      return Promise.reject(EMPTY_RESPONSE);
     } else {
-      logger.info("Resolved with object");
-      return Promise.resolve(result);
+      return result;
     }
   },
   /**
@@ -115,7 +111,7 @@ var self = {
    * @returns {*}
    */
   notAsArray: function (result) {
-    logger.debug("notAsArray");
+    logger.debug("notAsArray", result);
     if (result && result.join !== undefined) {
       return result.length > 0 ? result[0] : null;
     } else {
@@ -177,10 +173,10 @@ var self = {
    * @returns {*}
    */
   secureObjectId: function (object) {
-    logger.debug("secureObjectId");
+    logger.debug("secureObjectId", object);
     var id = object._id || object.id;
-    object = this.cleanObjectId(object);
-    object.id = id;
+    object = self.cleanObjectId(object);
+    object.id = id.toString ? id.toString() : id;
     return object;
   },
   /**

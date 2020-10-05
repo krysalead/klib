@@ -41,9 +41,11 @@ var self = {
     });
   },
   _prepareMongoose: (config) => {
+    logger.debug(`Preparing mongoose...(${config.MONGOOSE_DEBUG})`);
     clsMongoose(CLSService.namespace());
     mongoose.Promise = Promise;
     mongoose.set("debug", config.MONGOOSE_DEBUG || false);
+    mongoose.set("useFindAndModify", false);
     var db = mongoose.connection;
     db.on("error", printMongooseError);
   },

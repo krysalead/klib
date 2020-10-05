@@ -140,12 +140,6 @@ module.exports = function (config) {
     },
     doStart: (controller) => {
       var endpoint;
-      if (config.USE_MOCK && config.mocks) {
-        config.mocks.forEach((mock) => {
-          logger.warn(`${mock.url} is mocked`);
-          self.mockRequest(mock.url, require(process.cwd() + mock.data));
-        });
-      }
       if (config.useHydra) {
         endpoint = require("./HydraEndPoint");
       } else {
@@ -160,6 +154,12 @@ module.exports = function (config) {
       }
     },
   };
+  if (config.USE_MOCK && config.mocks) {
+    config.mocks.forEach((mock) => {
+      logger.warn(`${mock.url} is mocked`);
+      self.mockRequest(mock.url, require(process.cwd() + mock.data));
+    });
+  }
   global.MicroServiceWrapper = self;
   return self;
 };

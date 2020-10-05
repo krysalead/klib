@@ -82,7 +82,7 @@ var self = {
    * @returns {boolean}
    */
   isUndefined: function (o) {
-    return _.isUndefined(o);
+    return _.isUndefined(o) || o == null;
   },
   /**
    * Determine if an object is defined
