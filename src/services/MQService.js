@@ -63,7 +63,7 @@ module.exports = function (config) {
             var payload = JSON.parse(msg.content.toString());
             CLSService.set("reqId", payload["x-transaction-id"]);
             if (payload.src == undefined) {
-              logger.error("Failed to identify sender", msg.content);
+              logger.error("Failed to identify sender", payload);
             } else {
               handler(payload);
             }
@@ -84,11 +84,11 @@ module.exports = function (config) {
     },
   };
   process.on("SIGTERM", () => {
-    console.info("SIGTERM signal received.");
+    logger.info("SIGTERM signal received.");
     self.close();
   });
   process.on("SIGINT", () => {
-    console.info("SIGINT signal received.");
+    logger.info("SIGINT signal received.");
     self.close();
   });
   return self;

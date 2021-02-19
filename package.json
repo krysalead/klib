@@ -1,15 +1,16 @@
 {
-  "name": "klib",
+  "name": "k-dk",
   "version": "1.0.0",
   "description": "library for common login mechanism and CLS hooks",
   "scripts": {
-    "test": "mocha test --reporter spec",
-    "tdd": "mocha test -w --watch-files test/**/*.js,src/**/*.js"
+    "test": "LOG_LEVEL=error mocha test --reporter spec  | bunyan -o short",
+    "tdd": "LOG_LEVEL=debug mocha test -w --watch-files test/**/*.js,src/**/*.js  | bunyan -o short"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@influxdata/influxdb-client": "^1.8.0",
     "amqplib": "^0.5.2",
     "bunyan": "^1.8.12",
     "bunyan-loggly": "^1.3.5",

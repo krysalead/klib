@@ -9,7 +9,7 @@ var NotificationService = (config) => {
      * @param type invitation, parsing ongoing, parsed
      */
     sendEmail: function (user, type, context) {
-      logger.info("SendEmail");
+      logger.info("SendEmail",type);
       var payload = {
         src: config.server.url,
         type: type,

@@ -4,6 +4,9 @@ var CLSService = require("./CLSService");
 var logger = require("./LoggingService")("MongoDBUtils");
 var mongoose = require("mongoose");
 
+// maybe not the best place
+mongoose.Promise = Promise;
+
 function isEmpty(map) {
   for (var key in map) {
     if (map.hasOwnProperty(key)) {
@@ -63,11 +66,17 @@ var self = {
       ns.run(function () {
         logger.debug("Restoring context");
         CLSService.context(context);
-        fn.apply(scope, args)
-          .then(resolve, reject)
-          .catch((e) => {
-            logger.error(e, "fail call in runsafe");
-          });
+        try {
+          logger.debug("Running method");
+          fn.apply(scope, args)
+            .then(resolve, reject)
+            .catch((e) => {
+              logger.error(e, "fail call in runsafe");
+            });
+        } catch (e) {
+          logger.error(e, "Failed to call method");
+          reject(e);
+        }
       });
     });
   },

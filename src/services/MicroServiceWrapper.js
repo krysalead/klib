@@ -30,21 +30,27 @@ module.exports = function (config) {
     _handleResponse: (resolve, reject) => {
       return (response) => {
         logger.info("Response recieved", response);
-        if (response.statusCode === 200) {
-          resolve(response.result);
-        } else {
-          if (response.statusCode == 503) {
-            logger.warn(
-              `Service unavailable: ${response.result.reason} (${response.statusCode})`
-            );
-          } else {
-            logger.warn(
-              `${response.result.from} (${response.result.id}) answered with:${response.statusDescription} (${response.statusCode})`
-            );
-            logger.warn(response.result.message);
-          }
-          reject({ reason: response.result.reason, code: response.statusCode });
+        let reason = "unhandled error";
+        switch (response.statusCode) {
+          case 200:
+            resolve(response.result);
+            return;
+          case 503:
+            reason = `Service unavailable: ${response.result.reason} (${response.statusCode})`;
+            logger.warn(reason);
+            break;
+          default:
+            if (response.result) {
+              reason = `${response.result.from} (${response.result.id}) answered with:${response.statusDescription} (${response.statusCode}) - ${response.result.message}`;
+            } else {
+              reason = `Service failed: ${response.statusDescription} ${response.statusMessage} (${response.statusCode})`;
+            }
+            logger.error(reason);
         }
+        reject({
+          reason,
+          code: response.statusCode,
+        });
       };
     },
     close: () => {
@@ -135,7 +141,7 @@ module.exports = function (config) {
             });
         });
       } else {
-        throw "Not yet implemented";
+        throw "Direct Microservice Call is not yet implemented";
       }
     },
     doStart: (controller) => {

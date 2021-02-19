@@ -101,7 +101,7 @@ const HydraEndpoint = (config, controller) => {
     let api = express.Router();
     if (config.routes == undefined || config.routes.length == 0) {
       const message =
-        "Invalid configuration, you need to specify routes in your config.json as an array of {path,method,handler}";
+        "Invalid configuration, you need to specify routes in your config/config.json or config/config.js as an array of {path,method,handler}";
       logger.error(message);
       return;
     }

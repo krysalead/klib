@@ -6,3 +6,6 @@ global.utils = utils;
 
 // Tests go here.
 require("./services/CLSServiceTest");
+require("./services/ConfigServiceTest");
+require("./services/StringServiceTest");
+require("./services/UtilsServiceTest");

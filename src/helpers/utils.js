@@ -3,6 +3,7 @@ var sinon = require("sinon");
 var Q = require("q");
 var path = require("path");
 const CLSService = require("../services/CLSService");
+const dotenv = require("dotenv");
 
 const TESTFOLDER = "test";
 
@@ -17,9 +18,10 @@ __require = function (package) {
   return require(dependency);
 };
 
-var sandbox;
-
 var self = {
+  env: (dir) => {
+    return dotenv.parse(fs.readFileSync(path.join(dir, ".env")));
+  },
   require: function (package, dir) {
     return __require(package, dir);
   },

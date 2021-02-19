@@ -28,23 +28,27 @@ var self = {
         return Promise.reject("Database url not defined");
       }
       logger.info(`Mongoose connecting to ${dbUrl.split("@")[1] || dbUrl}...`);
-      mongoose.connect(dbUrl, function (err) {
-        if (err) {
-          logger.error("Connection fails", err);
-          reject(err);
-        } else {
-          logger.info("Mongoose connected");
-          global.mongoose_ready = true;
-          resolve();
-        }
-      });
+      mongoose
+        .connect(dbUrl, function (err) {
+          if (err) {
+            logger.error("Connection fails", err);
+            reject(err);
+          } else {
+            logger.info("Mongoose connected");
+            global.mongoose_ready = true;
+            resolve();
+          }
+        })
+        .catch((e) => {
+          logger.error(e, "Failed to connect to mongo");
+        });
     });
   },
   _prepareMongoose: (config) => {
     logger.debug(`Preparing mongoose...(${config.MONGOOSE_DEBUG})`);
     clsMongoose(CLSService.namespace());
     mongoose.Promise = Promise;
-    mongoose.set("debug", config.MONGOOSE_DEBUG || false);
+    mongoose.set("debug", config.MONGOOSE_DEBUG);
     mongoose.set("useFindAndModify", false);
     var db = mongoose.connection;
     db.on("error", printMongooseError);

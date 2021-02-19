@@ -2,6 +2,7 @@
 var bunyan = require("bunyan");
 var Bunyan2Loggly = require("bunyan-loggly");
 var CLSservice = require("./CLSService");
+const DEBUG = "debug";
 /**
  * Logging service allows to create better logging with date time stamp class scope. It relies on Moment.js, it could also send the logging to the server
  */
@@ -17,7 +18,7 @@ module.exports = function (context) {
     name: context,
     streams: [
       {
-        level: process.env.LOG_LEVEL || "debug",
+        level: process.env.LOG_LEVEL || DEBUG,
         stream: process.stdout,
       },
     ],
@@ -33,15 +34,16 @@ module.exports = function (context) {
       tags: [process.env.LOGGLY_TAG],
     };
 
-    var logglyStream = new Bunyan2Loggly(logglyConfig, null, null, function (
-      error,
-      result,
-      content
-    ) {
-      if (error) {
-        console.error("Bunyan2Loggly", error);
+    var logglyStream = new Bunyan2Loggly(
+      logglyConfig,
+      null,
+      null,
+      function (error, result, content) {
+        if (error) {
+          console.error("Bunyan2Loggly", error);
+        }
       }
-    });
+    );
     loggerConfig.streams.push({
       type: "raw",
       level: process.env.LOG_LEVEL || "debug",
@@ -52,28 +54,33 @@ module.exports = function (context) {
   var logger = bunyan.createLogger(loggerConfig);
   var augmentArguments = function (args) {
     var modifiedArgs = Array.from(args);
-    if (modifiedArgs[0].substr) {
-      //it is a string
-      var message = modifiedArgs[0];
-      modifiedArgs[0] = {
-        req_id: CLSservice.get("reqId"),
-      };
-      if (modifiedArgs.length > 1) {
-        //2 arguments in the call each are strings
-        var data = modifiedArgs[1];
-        modifiedArgs[1] = message + " - " + JSON.stringify(data);
+    if (modifiedArgs[0]) {
+      if (modifiedArgs[0].substr) {
+        //it is a string
+        var message = modifiedArgs[0];
+        modifiedArgs[0] = {
+          req_id: CLSservice.get("reqId"),
+        };
+        if (modifiedArgs.length > 1) {
+          //2 arguments in the call each are strings
+          var data = modifiedArgs[1];
+          modifiedArgs[1] = message + " - " + JSON.stringify(data);
+        } else {
+          modifiedArgs.push(message);
+        }
       } else {
-        modifiedArgs.push(message);
+        modifiedArgs[0] = Object.assign(modifiedArgs[0], {
+          req_id: CLSservice.get("reqId"),
+        });
       }
-    } else {
-      modifiedArgs[0] = Object.assign(modifiedArgs[0], {
-        req_id: CLSservice.get("reqId"),
-      });
     }
     return modifiedArgs;
   };
 
   return {
+    isDebug() {
+      return loggerConfig.streams[0].level == DEBUG;
+    },
     info: function () {
       logger.info.apply(logger, augmentArguments(arguments));
     },
